@@ -120,7 +120,7 @@ export const getHandValue = cards =>{
 export const getStrategyAction = (dealerUpCard, HandCards) =>{
   let dealerUpCardValue = getCardValue(dealerUpCard)
   dealerUpCardValue = dealerUpCardValue === 11 ? 1: dealerUpCardValue
-  if(HandCards[0] === HandCards[1])
+  if(HandCards[0].slice(1) === HandCards[1].slice(1))
   {
     let CardValue = getCardValue(HandCards[0])
     CardValue = CardValue === 11? 1: CardValue
