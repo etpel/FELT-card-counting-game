@@ -131,6 +131,6 @@ export const getStrategyAction = (dealerUpCard, HandCards) =>{
     HandCardsValue[1] -= 11
     return strategy['softTotals'][HandCardsValue[1]][dealerUpCardValue]
   } else{
-    return strategy['softTotals'][HandCardsValue[1]][dealerUpCardValue]
+    return strategy['hardTotals'][HandCardsValue[1]][dealerUpCardValue]
   }
 }
