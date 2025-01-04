@@ -124,13 +124,13 @@ export const getStrategyAction = (dealerUpCard, HandCards) =>{
   {
     let CardValue = getCardValue(HandCards[0])
     CardValue = CardValue === 11? 1: CardValue
-    return strategy['pairSplitting'][CardValue][dealerUpCardValue]
+    return strategy['pairSplitting'][CardValue][dealerUpCardValue-1]
   }
   let HandCardsValue = getHandValue(HandCards)
   if(HandCardsValue[0]){
     HandCardsValue[1] -= 11
-    return strategy['softTotals'][HandCardsValue[1]][dealerUpCardValue]
+    return strategy['softTotals'][HandCardsValue[1]][dealerUpCardValue-1]
   } else{
-    return strategy['hardTotals'][HandCardsValue[1]][dealerUpCardValue]
+    return strategy['hardTotals'][HandCardsValue[1]][dealerUpCardValue-1]
   }
 }
