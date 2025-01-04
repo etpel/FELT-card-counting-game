@@ -1,19 +1,34 @@
 import React from 'react'
 
-
 const Header = () => (
-  <header className='mb3 h5'>
-    <div>♥️♠️♦️♣️️</div>
-    <h1 className='m0 h2'>Hi-Lo Practice</h1>
+  <header className='mb3 p2 border-bottom border-silver'>
+    {/* Title and Suit Icons */}
+    <div className='flex items-center mb2'>
+      <div style={{ fontSize: '2rem', marginRight: 10 }}>♠ ♥ ♦ ♣</div>
+      <h1 className='m0 h1'>FELT Card Counting Trainer</h1>
+    </div>
+
+    {/* Intro Paragraph */}
     <p className='m0'>
-      Hi-Lo is a simple card counting system used in blackjack.
-      It assigns a count for every card that's played:
+      This application helps you practice the <strong>FELT</strong> counting system
+      for Blackjack. FELT assigns different values to each card, enabling you to track
+      when the odds shift in your favor. We’ve also integrated a strategy table so you
+      can see (and practice) the recommended move — <em>Split, Hit, Double, Stand</em> —
+      for various player hands and dealer upcards.
+    </p>
 
-      A Q K J = -2
+    {/* Example breakdown of FELT (You can customize) */}
+    <p className='m0 mt2'>
+      <strong>FELT count example</strong>: 
+      <br/>• <strong>2–6</strong> = +1 
+      <br/>• <strong>7–9</strong> = 0 
+      <br/>• <strong>10, J, Q, K, A</strong> = −1
+    </p>
 
-      2, 7 = 1
-
-      3, 4, 5, 6 = 2
+    <p className='m0 mt2'>
+      Click <strong>Deal Initial</strong> to receive two cards and the dealer’s upcard,
+      then choose the move that matches the Basic Strategy. Keep an eye on the
+      <strong> running count</strong> to track your advantage as the shoe is dealt.
     </p>
   </header>
 )

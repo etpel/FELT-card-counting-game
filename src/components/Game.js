@@ -25,47 +25,77 @@ const Game = ({ game, actions }) => {
   )
 
   return (
-    <div className='p3 mx-auto' style={{ maxWidth: 600 }}>
+    <div className='mx-auto' style={{ maxWidth: 700 }}>
+      {/* Updated header describing FELT */}
       <Header />
 
-      {/* Dealer's Upcard */}
-      <h2>Dealer's Upcard:</h2>
-      {dealerUpCard && renderCard(dealerUpCard)}
-
-      {/* Player's Hand */}
-      <h2>Player's Hand:</h2>
-      {playerHand.map(renderCard)}
-
-      {/* Result of "split/hit/double/stand"? */}
-      {userResult && (
-        <p className="mt2 mb2 bold">
-          {userResult}
-        </p>
-      )}
-
-      {/* Top row: New Game, Deal Initial, More Cards */}
-      <div className='mb3'>
+      {/* A row for dealing actions */}
+      <div className='mb3 flex flex-wrap'>
         <button
-          className='btn btn-primary bg-black mr2'
+          className='btn btn-primary bg-black mr2 mb2'
           onClick={actions.newGame}
         >
           Reset (New Game)
         </button>
         <button
-          className='btn btn-primary bg-purple mr2'
+          className='btn btn-primary bg-purple mr2 mb2'
           onClick={actions.dealInitial}
         >
-          Deal Initial (2 Player, 1 Dealer)
+          Deal Initial
         </button>
         <button
-          className='btn btn-primary bg-black'
+          className='btn btn-primary bg-black mb2'
           onClick={actions.deal}
         >
           More cards →
         </button>
       </div>
 
-      {/* Toggle running count */}
+      {/* Dealer & Player Hands */}
+      <div className='mb3'>
+        <h3>Dealer's Upcard</h3>
+        {dealerUpCard && renderCard(dealerUpCard)}
+
+        <h3 className='mt3'>Player's Hand</h3>
+        {playerHand.map(renderCard)}
+      </div>
+
+      {/* Show any user feedback (Correct! / Wrong! etc.) */}
+      {userResult && (
+        <p className="mt2 mb3 bold">
+          {userResult}
+        </p>
+      )}
+
+      {/* Player move buttons */}
+      <div className='mb3'>
+        <button
+          className='btn btn-primary bg-blue mr2 mb2'
+          onClick={() => actions.playerChoice('split')}
+        >
+          Split
+        </button>
+        <button
+          className='btn btn-primary bg-green mr2 mb2'
+          onClick={() => actions.playerChoice('hit')}
+        >
+          Hit
+        </button>
+        <button
+          className='btn btn-primary bg-orange mr2 mb2'
+          onClick={() => actions.playerChoice('double')}
+        >
+          Double
+        </button>
+        <button
+          className='btn btn-primary bg-gray mb2'
+          onClick={() => actions.playerChoice('stand')}
+        >
+          Stand
+        </button>
+      </div>
+
+      {/* Toggle count & display */}
       <div className='mb3'>
         <button
           className='btn btn-primary bg-red'
@@ -79,35 +109,7 @@ const Game = ({ game, actions }) => {
         )}
       </div>
 
-      {/* Bottom row: Split, Hit, Double, Stand */}
-      <div className='mb3'>
-        <button
-          className='btn btn-primary bg-blue mr2'
-          onClick={() => actions.playerChoice('split')}
-        >
-          Split
-        </button>
-        <button
-          className='btn btn-primary bg-green mr2'
-          onClick={() => actions.playerChoice('hit')}
-        >
-          Hit
-        </button>
-        <button
-          className='btn btn-primary bg-orange mr2'
-          onClick={() => actions.playerChoice('double')}
-        >
-          Double
-        </button>
-        {/* NEW Stand button */}
-        <button
-          className='btn btn-primary bg-gray'
-          onClick={() => actions.playerChoice('stand')}
-        >
-          Stand
-        </button>
-      </div>
-
+      {/* Footer & stats */}
       <p className='h5'>
         Cards seen: {idx} ({shoe.length - idx} remaining)
       </p>
