@@ -1,7 +1,7 @@
 {
   "name": "card-counting-game",
   "version": "0.1.0",
-  "homepage": "https://brendansudol.github.io/card-counting-game",
+  "homepage": "https://etpel.github.io/FELT-card-counting-game/",
   "private": true,
   "devDependencies": {
     "gh-pages": "^0.12.0",
@@ -11,9 +11,9 @@
     "ace-css": "^1.1.0",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
-    "react-redux": "^5.0.2",
-    "redux": "^3.6.0",
-    "redux-logger": "^2.8.1"
+    "react-redux": "^5.1.2",
+    "redux": "^3.7.2",
+    "redux-logger": "^2.10.2"
   },
   "scripts": {
     "start": "react-scripts start",
