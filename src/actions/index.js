@@ -7,7 +7,7 @@ export const TOGGLE_COUNT = 'TOGGLE_COUNT'
 
 export const newGame = () => ({
   type: NEW_GAME,
-  shoe: makeShoe(6),
+  shoe: makeShoe(8),
   rand: rand(),
 })
 
