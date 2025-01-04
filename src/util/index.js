@@ -86,6 +86,10 @@ export const strategy = {
   // according to Basic Strategy principles.
       //     A    2    3    4    5    6    7    8    9    10
   "hardTotals": {
+      21: ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"],
+      20: ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"],
+      19: ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"],
+      18: ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"],
       17: ["S", "S", "S", "S", "S", "S", "S", "S", "S", "S"],
       16: ["H", "S", "S", "S", "S", "S", "H", "H", "H", "H"],
       15: ["H", "S", "S", "S", "S", "S", "H", "H", "H", "H"],
@@ -96,6 +100,12 @@ export const strategy = {
       10: ["H", "D", "D", "D", "D", "D", "D", "D", "D", "H"],
       9:  ["H", "H", "D", "D", "D", "D", "H", "H", "H", "H"],
       8:  ["H", "H", "H", "H", "H", "H", "H", "H", "H", "H"],
+      7:  ["H", "H", "H", "H", "H", "H", "H", "H", "H", "H"],
+      6:  ["H", "H", "H", "H", "H", "H", "H", "H", "H", "H"],
+      5:  ["H", "H", "H", "H", "H", "H", "H", "H", "H", "H"],
+      4:  ["H", "H", "H", "H", "H", "H", "H", "H", "H", "H"],
+      3:  ["H", "H", "H", "H", "H", "H", "H", "H", "H", "H"],
+      2:  ["H", "H", "H", "H", "H", "H", "H", "H", "H", "H"],
   }
 }
 
@@ -124,7 +134,9 @@ export const getStrategyAction = (dealerUpCard, HandCards) =>{
   {
     let CardValue = getCardValue(HandCards[0])
     CardValue = CardValue === 11? 1: CardValue
-    return strategy['pairSplitting'][CardValue][dealerUpCardValue-1]
+    if(strategy['pairSplitting'][CardValue][dealerUpCardValue-1]){
+      return 'split'
+    }
   }
   let HandCardsValue = getHandValue(HandCards)
   if(HandCardsValue[0]){
