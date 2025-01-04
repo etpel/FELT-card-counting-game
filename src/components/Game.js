@@ -8,8 +8,8 @@ const Game = ({ game, actions }) => {
     idx,
     count,
     is_visible,
-    playerHand,
     dealerUpCard,
+    playerHand,
     userResult,
   } = game
 
@@ -35,14 +35,14 @@ const Game = ({ game, actions }) => {
       <h2>Player's Hand:</h2>
       {playerHand.map(renderCard)}
 
-      {/* Show result if user clicked Split/Hit/Double */}
+      {/* Result of "split/hit/double"? */}
       {userResult && (
         <p className="mt2 mb2 bold">
           {userResult}
         </p>
       )}
 
-      {/* Buttons to start new game or deal initial 3 cards */}
+      {/* Buttons at top or middle; up to you */}
       <div className='mb3'>
         <button
           className='btn btn-primary bg-black mr2'
@@ -51,18 +51,25 @@ const Game = ({ game, actions }) => {
           Reset (New Game)
         </button>
         <button
-          className='btn btn-primary bg-purple'
+          className='btn btn-primary bg-purple mr2'
           onClick={actions.dealInitial}
         >
           Deal Initial (2 Player, 1 Dealer)
         </button>
+        <button
+          className='btn btn-primary bg-black'
+          onClick={actions.deal}
+        >
+          More cards →
+        </button>
       </div>
 
-      {/* Toggle count */}
+      {/* Toggle running count */}
       <div className='mb3'>
         <button
           className='btn btn-primary bg-red'
           onClick={actions.toggleCount}
+          style={{ width: 210 }}
         >
           {is_visible ? 'Hide' : 'Show'} running count
         </button>
@@ -71,7 +78,7 @@ const Game = ({ game, actions }) => {
         )}
       </div>
 
-      {/* Move the player actions to the bottom */}
+      {/* Player moves at bottom */}
       <div className='mb3'>
         <button
           className='btn btn-primary bg-blue mr2'

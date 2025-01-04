@@ -1,10 +1,9 @@
-/* File: ./src/reducers/index.js */
 import {
   NEW_GAME,
+  DEAL_INITIAL,
   DEAL_CARDS,
   TOGGLE_COUNT,
-  DEAL_INITIAL,   // NEW
-  PLAYER_CHOICE,  // NEW
+  PLAYER_CHOICE,
 } from '../actions'
 
 import { getCount, getStrategyAction } from '../util'
@@ -12,111 +11,122 @@ import { getCount, getStrategyAction } from '../util'
 const init = {
   shoe: [],
   idx: 0,
-  rand: 0,
-  count: 0,
+  count: 0,           // running count
   is_visible: false,
 
-  // NEW: We'll store player's cards, dealer's upcard, recommended action, and result
-  playerHand: [],
-  dealerUpCard: null,
+  dealerUpCard: null, // will store 1 card
+  playerHand: [],     // will store 2 cards
   recommendedAction: null,
-  userResult: null, 
+  userResult: null,
 }
 
 const start = (state, action) => {
-  const { shoe, rand } = action
+  const { shoe } = action
+  // Reset state, shuffle shoe is already in action.shoe
   return {
     ...init,
     shoe,
-    rand,
-    count: getCount(0, shoe.slice(0, rand)), 
   }
 }
 
-const deal = (state, action) => {
-  const { rand } = action
-  const idx = state.idx + state.rand
-  const cards = state.shoe.slice(idx, idx + rand)
-
-  return {
-    ...state,
-    idx,
-    rand,
-    count: getCount(state.count, cards),
-  }
-}
-
-// NEW: function to deal initial hands: 2 for player, 1 for dealer
+// Deal exactly 3 cards: 1 dealer, 2 player
 const dealInitialCards = (state) => {
-  const { shoe, idx } = state
-  // Deal 2 to player and 1 to dealer
-  const playerHand = [shoe[idx], shoe[idx + 1]]
-  const dealerUpCard = shoe[idx + 2]
+  const { shoe, idx, count } = state
+  const dealerUpCard = shoe[idx]
+  const playerHand = [shoe[idx + 1], shoe[idx + 2]]
   const newIdx = idx + 3
 
-  // Determine the recommended action from your getStrategyAction function
+  // Cards that were just dealt:
+  const allDealt = [dealerUpCard, ...playerHand]
+
+  // Update running count based on these 3 cards
+  const newCount = getCount(count, allDealt)
+
+  // Optionally, figure out recommended action
   const recommendedAction = getStrategyAction(dealerUpCard, playerHand)
 
   return {
     ...state,
     idx: newIdx,
-    playerHand,
     dealerUpCard,
+    playerHand,
     recommendedAction,
-    userResult: null, // reset
+    userResult: null,
+    count: newCount, // updated
   }
 }
 
-// NEW: function to check player's choice vs recommended action
-const checkPlayerChoice = (state, choice) => {
-  // recommendedAction might be "S", "H", "D", or boolean for split
-  // We unify "split" => "SP" or something similar
-  // For this example, let's just do a simple check:
-  let rec = state.recommendedAction
+// Deal “numCards” more from the shoe
+const dealMoreCards = (state, numCards) => {
+  const { shoe, idx, count } = state
+  const cards = shoe.slice(idx, idx + numCards)
+  const newIdx = idx + numCards
 
-  // If the recommendedAction is a boolean (for splitting pairs),
-  // we map that to "split" or "hit" to compare:
+  // Update the running count with newly dealt cards
+  const newCount = getCount(count, cards)
+
+  return {
+    ...state,
+    idx: newIdx,
+    count: newCount,
+  }
+}
+
+// Compare user’s “split/hit/double” with recommendedAction
+const checkPlayerChoice = (state, choice) => {
+  let rec = state.recommendedAction
+  if (!rec) {
+    return {
+      ...state,
+      userResult: 'No hand dealt yet!',
+    }
+  }
+
+  // If rec is boolean, interpret it as 'split' vs. 'no split'
   let recString = ''
   if (typeof rec === 'boolean') {
-    recString = rec ? 'split' : 'no_split'
+    recString = rec ? 'split' : 'hit' // or 'stand' 
   } else {
-    // rec might be 'S', 'H', 'D', etc.
-    // Let's map them:
+    // rec might be 'SP', 'H', 'S', 'D'
     switch (rec) {
-      case 'S':
-        recString = 'stand'
+      case 'SP':
+        recString = 'split'
         break
       case 'H':
         recString = 'hit'
         break
+      case 'S':
+        recString = 'stand'
+        break
       case 'D':
         recString = 'double'
-        break
-      case 'SP':
-        recString = 'split'
         break
       default:
         recString = 'hit'
     }
   }
 
-  // Compare the user's choice to the recommended choice
   const isCorrect = (recString === choice)
 
   return {
     ...state,
-    userResult: isCorrect ? 'Correct!' : `Wrong! The correct move is ${recString.toUpperCase()}.`
+    userResult: isCorrect
+      ? 'Correct!'
+      : `Wrong! The correct move is ${recString.toUpperCase()}.`,
   }
 }
 
-// Our main reducer
 const game = (state = init, action) => {
   switch (action.type) {
     case NEW_GAME:
       return start(state, action)
 
+    case DEAL_INITIAL:
+      return dealInitialCards(state)
+
     case DEAL_CARDS:
-      return deal(state, action)
+      // deal a certain number of extra cards (1, 2, etc.)
+      return dealMoreCards(state, action.numCards)
 
     case TOGGLE_COUNT:
       return {
@@ -124,11 +134,6 @@ const game = (state = init, action) => {
         is_visible: !state.is_visible,
       }
 
-    // NEW
-    case DEAL_INITIAL:
-      return dealInitialCards(state)
-
-    // NEW
     case PLAYER_CHOICE:
       return checkPlayerChoice(state, action.choice)
 
