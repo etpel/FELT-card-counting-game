@@ -38,7 +38,7 @@ export const makeShoe = (n = 6) => (
 export const hiLo = card => {
   const val = card.slice(1)
   if (['3', '4', '5', '6'].includes(val)) return 2
-  if (['1', '7'].includes(val)) return 1
+  if (['2', '7'].includes(val)) return 1
   if (['10', 'J', 'Q', 'K', 'A'].includes(val)) return -2
   return 0
 }
