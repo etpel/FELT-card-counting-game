@@ -84,27 +84,24 @@ const checkPlayerChoice = (state, choice) => {
 
   // If rec is boolean, interpret it as 'split' vs. 'no split'
   let recString = ''
-  if (typeof rec === 'boolean') {
-    recString = rec ? 'split' : 'hit' // or 'stand' 
-  } else {
-    // rec might be 'SP', 'H', 'S', 'D'
-    switch (rec) {
-      case 'SP':
-        recString = 'split'
-        break
-      case 'H':
-        recString = 'hit'
-        break
-      case 'S':
-        recString = 'stand'
-        break
-      case 'D':
-        recString = 'double'
-        break
-      default:
-        recString = 'hit'
-    }
+  // excerpt from checkPlayerChoice in src/reducers/index.js
+  switch (rec) {
+    case 'SP':
+      recString = 'split'
+      break
+    case 'H':
+      recString = 'hit'
+      break
+    case 'S':
+      recString = 'stand'   // so if recommended = 'S', we expect userChoice = 'stand'
+      break
+    case 'D':
+      recString = 'double'
+      break
+    default:
+      recString = 'hit'
   }
+
 
   const isCorrect = (recString === choice)
 

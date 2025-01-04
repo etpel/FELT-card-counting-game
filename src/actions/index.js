@@ -27,5 +27,5 @@ export const toggleCount = () => ({
 
 export const playerChoice = (choice) => ({
   type: PLAYER_CHOICE,
-  choice, // 'split', 'hit', or 'double'
+  choice, // 'split', 'hit', 'double', or 'stand'
 })

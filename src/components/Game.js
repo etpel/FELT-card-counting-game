@@ -1,3 +1,4 @@
+/* File: ./src/components/Game.js */
 import React from 'react'
 import Footer from './Footer'
 import Header from './Header'
@@ -35,14 +36,14 @@ const Game = ({ game, actions }) => {
       <h2>Player's Hand:</h2>
       {playerHand.map(renderCard)}
 
-      {/* Result of "split/hit/double"? */}
+      {/* Result of "split/hit/double/stand"? */}
       {userResult && (
         <p className="mt2 mb2 bold">
           {userResult}
         </p>
       )}
 
-      {/* Buttons at top or middle; up to you */}
+      {/* Top row: New Game, Deal Initial, More Cards */}
       <div className='mb3'>
         <button
           className='btn btn-primary bg-black mr2'
@@ -78,7 +79,7 @@ const Game = ({ game, actions }) => {
         )}
       </div>
 
-      {/* Player moves at bottom */}
+      {/* Bottom row: Split, Hit, Double, Stand */}
       <div className='mb3'>
         <button
           className='btn btn-primary bg-blue mr2'
@@ -93,10 +94,17 @@ const Game = ({ game, actions }) => {
           Hit
         </button>
         <button
-          className='btn btn-primary bg-orange'
+          className='btn btn-primary bg-orange mr2'
           onClick={() => actions.playerChoice('double')}
         >
           Double
+        </button>
+        {/* NEW Stand button */}
+        <button
+          className='btn btn-primary bg-gray'
+          onClick={() => actions.playerChoice('stand')}
+        >
+          Stand
         </button>
       </div>
 
