@@ -29,7 +29,7 @@ export const deck = () => ([
 ])
 
 export const makeShoe = (n = 6) => (
-  [].concat(...[...Array(n)].map(_ => shuffle(deck())))
+  shuffle([].concat(...[...Array(n)].map(_ => deck())))
 )
 
 export const hiLo = card => {
