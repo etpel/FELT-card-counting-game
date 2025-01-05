@@ -1,171 +1,58 @@
+/* File: ./src/components/Game.js */
 import React from 'react'
 import Footer from './Footer'
 import Header from './Header'
-import { strategy, getCardValue, getHandValue } from '../util'
-
-
-function getActionColor(action) {
-  switch (action) {
-    case 'SP':     // "Split"
-      return '#cceeff'   // a light blue
-    case 'H':      // "Hit"
-      return '#ccffcc'   // a light green
-    case 'D':      // "Double"
-      return '#ffe0b3'   // a light orange
-    case 'S':      // "Stand"
-      return '#dddddd'   // a light gray
-    default:
-      return '#ffffff'   // white (or no color) for '-'
-  }
-}
-
-// For the one highlighted cell
-const HIGHLIGHT_STYLE = {
-  backgroundColor: 'yellow',
-  fontWeight: 'bold',
-}
-
-// Columns: dealer upcard from A..10
-const dealerLabels = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+import { strategy, interpretDeviationCell, getCellStyle } from '../util'
 
 /**
- * figureOutTableType(dealerUpCard, playerHand)
- * returns:
- * {
- *   tableName: 'pairSplitting' | 'softTotals' | 'hardTotals',
- *   rowKey: string (for the row),
- *   colIndex: number (0..9),
- *   recommended: string (e.g. 'H','S','D','SP') or boolean for splitting
- * }
- */
-function figureOutTableType(dealerUpCard, playerHand) {
-  if (!dealerUpCard || playerHand.length < 2) {
-    return null
-  }
-
-  // Convert dealer’s upcard to a 0..9 index in dealerLabels
-  // dealerLabels = ['A','2','3','4','5','6','7','8','9','10']
-  const dealerVal = getCardValue(dealerUpCard)
-  //  A => 11 in getCardValue, we treat that as 1 => index 0
-  let dealerIndex = (dealerVal === 11) ? 0 : (dealerVal - 1)
-  if (dealerIndex < 0 || dealerIndex > 9) {
-    dealerIndex = 9 // fallback if something is off
-  }
-
-  // Check if the player's 2 cards are a pair
-  const firstVal = playerHand[0].slice(1)
-  const secondVal = playerHand[1].slice(1)
-  const isPair = (firstVal === secondVal)
-
-  // Evaluate total
-  const [isSoft, total] = getHandValue(playerHand)
-
-  // “Recommended” can be 'H','S','D','SP','split', or boolean from your logic
-  // but let's replicate enough to know which table we're in
-  if (isPair) {
-    // If it’s a pair, “tableName” is pairSplitting
-    // rowKey is the “value” of that pair (1 for Ace, numeric otherwise)
-    // For example, pair of 8 => rowKey is '8'
-    let pairVal = getCardValue(playerHand[0]) // same for both
-    if (pairVal === 11) pairVal = 1
-    const rowKey = String(pairVal) // e.g. '1','2','8','10'
-    // The recommended is from strategy.pairSplitting[rowKey][dealerIndex]
-    let recommended = strategy.pairSplitting[rowKey] 
-      ? strategy.pairSplitting[rowKey][dealerIndex]
-      : false
-
-    return {
-      tableName: 'pairSplitting',
-      rowKey,
-      colIndex: dealerIndex,
-      recommended, // true/false
-    }
-  }
-  else if (isSoft) {
-    // Soft totals => “softTotals”
-    // rowKey is (total - 11).  E.g. A+6 => total=17 => rowKey=6
-    // But if total=18 => rowKey=7, etc.
-    const rowKey = String(total - 11) // e.g. '6','7','8', ...
-    // recommended => strategy.softTotals[rowKey][dealerIndex]
-    let recommended = strategy.softTotals[rowKey]
-      ? strategy.softTotals[rowKey][dealerIndex]
-      : 'H' // fallback
-
-    return {
-      tableName: 'softTotals',
-      rowKey,
-      colIndex: dealerIndex,
-      recommended,
-    }
-  }
-  else {
-    // Hard totals => “hardTotals”
-    const rowKey = String(total) // e.g. '14','10','20', ...
-    let recommended = strategy.hardTotals[rowKey]
-      ? strategy.hardTotals[rowKey][dealerIndex]
-      : 'H'
-
-    return {
-      tableName: 'hardTotals',
-      rowKey,
-      colIndex: dealerIndex,
-      recommended,
-    }
-  }
-}
-
-/**
- * StrategyTable: 
- * Renders Pair Splitting, Soft Totals, Hard Totals
- * and highlights the cell for the current player's hand + dealer upcard.
+ * We assume you have both Running Count (RC) and True Count (TC) in your Redux state.
+ * For example, game.count = RC, game.trueCount = TC.
  *
- * We'll pass in dealerUpCard, playerHand from props, 
- * so we can figure out which cell to highlight.
+ * This helper re-renders the 3 sub-tables: pairSplitting, softTotals, hardTotals.
+ * Each table has 10 columns (2..10, plus A).
+ * The row data is read from the "strategy" object in ../util.
+ * We interpret each cell with interpretDeviationCell(..., trueCount).
+ * Then color it with getCellStyle(...).
  */
-const StrategyTable = ({ dealerUpCard, playerHand }) => {
-  const coords = figureOutTableType(dealerUpCard, playerHand)
 
-  const isHighlightCell = (table, rowKey, colIdx) => {
-    if (!coords) return false
-    if (coords.tableName !== table) return false
-    if (coords.rowKey !== rowKey) return false
-    if (coords.colIndex !== colIdx) return false
-    return true
-  }
+class StrategyTable extends React.Component {
+  renderSubtable(tableData, rowKeys, tableTitle, renderRowLabel) {
+    // We'll use columns [2,3,4,5,6,7,8,9,10,'A'] => 10 columns
+    // In the strategy object, each row is an array of length 10
+    const dealerLabels = ['2','3','4','5','6','7','8','9','10','A']
+    const { trueCount } = this.props
 
-  const renderPairSplitting = () => {
-    const pairKeys = Object.keys(strategy.pairSplitting)
     return (
-      <div style={{ overflowX: 'auto', marginBottom: '1rem' }}>
-        <h4>Pair Splitting</h4>
-        <table className='table-light border-collapse'>
+      <div style={{ marginBottom: '2rem' }}>
+        <h3>{tableTitle}</h3>
+        <table style={{ borderCollapse:'collapse', border:'1px solid #ccc' }}>
           <thead>
             <tr>
-              <th>Player Pair</th>
-              {dealerLabels.map(label => <th key={label}>{label}</th>)}
+              <th style={{ padding:'4px', border:'1px solid #ccc' }}></th>
+              {dealerLabels.map((lbl, idx) => (
+                <th key={idx} style={{ padding:'4px', border:'1px solid #ccc' }}>{lbl}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {pairKeys.map(pairVal => {
-              const rowData = strategy.pairSplitting[pairVal]
+            {rowKeys.map(rk => {
+              const rowData = tableData[rk]
               return (
-                <tr key={pairVal}>
-                  <td>{pairVal === '1' ? 'A' : pairVal}</td>
-                  {rowData.map((canSplit, i) => {
-                    // "SP" if true, otherwise "-"
-                    const action = canSplit ? 'SP' : '-'
-                    const baseColor = getActionColor(action)
-                    const highlight = isHighlightCell('pairSplitting', pairVal, i)
-                      ? HIGHLIGHT_STYLE
-                      : {}
-                    // Merge them
-                    const cellStyle = {
-                      backgroundColor: baseColor,
-                      ...highlight,
+                <tr key={rk}>
+                  <td style={{ padding:'4px', border:'1px solid #ccc', fontWeight:'bold' }}>
+                    {renderRowLabel(rk)}
+                  </td>
+                  {rowData.map((cell, colIndex) => {
+                    const finalAction = interpretDeviationCell(cell, trueCount)
+                    let value = typeof cell !== 'object'? cell: cell[0]
+                    const styleObj = {
+                      ...getCellStyle(finalAction),
+                      border: '1px solid #ccc',
+                      padding:'4px'
                     }
                     return (
-                      <td key={i} style={cellStyle}>
-                        {action}
+                      <td key={colIndex} style={styleObj}>
+                        {value}
                       </td>
                     )
                   })}
@@ -178,117 +65,60 @@ const StrategyTable = ({ dealerUpCard, playerHand }) => {
     )
   }
 
-  const renderSoftTotals = () => {
-    const softKeys = Object.keys(strategy.softTotals)
-      .map(x => parseInt(x, 10))
-      .sort((a, b) => b - a)
+  render() {
+    const { trueCount } = this.props
+
+    // We'll get the row keys for each sub-object:
+    // For pairSplitting, keys might be 1,10,9, etc.
+    const pairKeys = Object.keys(strategy.pairSplitting).map(n=>parseInt(n,10)).sort((a,b)=>a-b)
+    // For softTotals/hardTotals, they might be numeric 10,9,8, etc.
+    const softKeys = Object.keys(strategy.softTotals).map(n=>parseInt(n,10)).sort((a,b)=>b-a)
+    const hardKeys = Object.keys(strategy.hardTotals).map(n=>parseInt(n,10)).sort((a,b)=>b-a)
+
+    // Now build each table
+    const pairSplittingTable = this.renderSubtable(
+      strategy.pairSplitting,
+      pairKeys,
+      'Pair Splitting',
+      rk => (rk===1 ? 'AA' : (rk===10 ? 'TT' : String(rk)))
+    )
+
+    const softTotalsTable = this.renderSubtable(
+      strategy.softTotals,
+      softKeys,
+      'Soft Totals',
+      rk => `A + ${rk}`
+    )
+
+    const hardTotalsTable = this.renderSubtable(
+      strategy.hardTotals,
+      hardKeys,
+      'Hard Totals',
+      rk => rk
+    )
+
     return (
-      <div style={{ overflowX: 'auto', marginBottom: '1rem' }}>
-        <h4>Soft Totals</h4>
-        <table className='table-light border-collapse'>
-          <thead>
-            <tr>
-              <th>Soft Total</th>
-              {dealerLabels.map(label => <th key={label}>{label}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {softKeys.map(sk => {
-              const rowData = strategy.softTotals[sk]
-              return (
-                <tr key={sk}>
-                  <td>{`A + ${sk}`}</td>
-                  {rowData.map((action, i) => {
-                    // action could be 'H','S','D'...
-                    const baseColor = getActionColor(action)
-                    const highlight = isHighlightCell('softTotals', String(sk), i)
-                      ? HIGHLIGHT_STYLE
-                      : {}
-                    const cellStyle = {
-                      backgroundColor: baseColor,
-                      ...highlight,
-                    }
-                    return (
-                      <td key={i} style={cellStyle}>
-                        {action}
-                      </td>
-                    )
-                  })}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+      <div>
+        <h2>Strategy Deviation Table</h2>
+        <p>True Count = {trueCount.toFixed(1)}</p>
+        {pairSplittingTable}
+        {softTotalsTable}
+        {hardTotalsTable}
       </div>
     )
   }
-
-  const renderHardTotals = () => {
-    const hardKeys = Object.keys(strategy.hardTotals)
-      .map(x => parseInt(x, 10))
-      .sort((a, b) => b - a)
-    return (
-      <div style={{ overflowX: 'auto', marginBottom: '1rem' }}>
-        <h4>Hard Totals</h4>
-        <table className='table-light border-collapse'>
-          <thead>
-            <tr>
-              <th>Hard Total</th>
-              {dealerLabels.map(label => <th key={label}>{label}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {hardKeys.map(hk => {
-              const rowData = strategy.hardTotals[hk]
-              return (
-                <tr key={hk}>
-                  <td>{hk}</td>
-                  {rowData.map((action, i) => {
-                    const baseColor = getActionColor(action)
-                    const highlight = isHighlightCell('hardTotals', String(hk), i)
-                      ? HIGHLIGHT_STYLE
-                      : {}
-                    const cellStyle = {
-                      backgroundColor: baseColor,
-                      ...highlight,
-                    }
-                    return (
-                      <td key={i} style={cellStyle}>
-                        {action}
-                      </td>
-                    )
-                  })}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    )
-  }
-
-  return (
-    <div className='mt3 p2 border border-silver'>
-      {renderPairSplitting()}
-      {renderSoftTotals()}
-      {renderHardTotals()}
-    </div>
-  )
 }
-
-
-// ----- CLASS COMPONENT (for React 15.x) -----
 
 class Game extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      showTable: false,
+      showStrategy: false
     }
   }
 
-  toggleTable = () => {
-    this.setState(prev => ({ showTable: !prev.showTable }))
+  toggleStrategy = () => {
+    this.setState(prev => ({ showStrategy: !prev.showStrategy }))
   }
 
   renderCard(card) {
@@ -308,20 +138,20 @@ class Game extends React.Component {
     const {
       shoe,
       idx,
-      count,
+      count,       // Running Count (RC)
+      trueCount,   // True Count (TC)
       is_visible,
       dealerUpCard,
       playerHand,
       userResult,
     } = game
 
-    const { showTable } = this.state
+    const { showStrategy } = this.state
 
     return (
       <div className='mx-auto' style={{ maxWidth: 700 }}>
         <Header />
 
-        {/* A row for dealing actions */}
         <div className='mb3 flex flex-wrap'>
           <button
             className='btn btn-primary bg-black mr2 mb2'
@@ -329,37 +159,22 @@ class Game extends React.Component {
           >
             Reset (New Game)
           </button>
-          <button
-            className='btn btn-primary bg-purple mr2 mb2'
-            onClick={actions.dealInitial}
-          >
-            Deal Initial
-          </button>
-          <button
-            className='btn btn-primary bg-black mb2'
-            onClick={actions.deal}
-          >
-            More cards →
-          </button>
+          
         </div>
 
-        {/* Dealer & Player Hands */}
         <div className='mb3'>
           <h3>Dealer's Upcard</h3>
           {dealerUpCard && this.renderCard(dealerUpCard)}
-
           <h3 className='mt3'>Player's Hand</h3>
           {playerHand.map(c => this.renderCard(c))}
         </div>
 
-        {/* Show any user feedback (Correct! / Wrong! etc.) */}
         {userResult && (
-          <p className="mt2 mb3 bold">
+          <p className='mt2 mb3 bold'>
             {userResult}
           </p>
         )}
 
-        {/* Player move buttons */}
         <div className='mb3'>
           <button
             className='btn btn-primary bg-blue mr2 mb2'
@@ -386,8 +201,14 @@ class Game extends React.Component {
             Stand
           </button>
         </div>
-
-        {/* Toggle running count & display */}
+        <div className='mb3'>
+        <button
+            className='btn btn-primary bg-purple mr2 mb2'
+            onClick={actions.dealInitial}
+          >
+            Deal Cards
+          </button>
+          </div>
         <div className='mb3'>
           <button
             className='btn btn-primary bg-red'
@@ -397,7 +218,9 @@ class Game extends React.Component {
             {is_visible ? 'Hide' : 'Show'} running count
           </button>
           {is_visible && (
-            <span className='ml2 h3 bold align-middle'>{count}</span>
+            <span className='ml2 h3 bold align-middle'>
+              RC: {count} | TC: {trueCount.toFixed(1)}
+            </span>          
           )}
         </div>
 
@@ -405,32 +228,26 @@ class Game extends React.Component {
           Cards seen: {idx} ({shoe.length - idx} remaining)
         </p>
 
-        {/* Show/Hide Strategy Table Button */}
         <div className='mb3'>
-          {showTable ? (
+          {showStrategy ? (
             <button
               className='btn btn-primary bg-darken-2'
-              onClick={this.toggleTable}
+              onClick={this.toggleStrategy}
             >
               Hide Strategy Table
             </button>
           ) : (
             <button
               className='btn btn-primary bg-navy white'
-              onClick={this.toggleTable}
+              onClick={this.toggleStrategy}
             >
               Show Strategy Table
             </button>
           )}
         </div>
 
-        {/* If showTable is true, render StrategyTable
-            passing dealerUpCard & playerHand so we can highlight the recommended cell */}
-        {showTable && (
-          <StrategyTable
-            dealerUpCard={dealerUpCard}
-            playerHand={playerHand}
-          />
+        {showStrategy && (
+          <StrategyTable trueCount={trueCount} />
         )}
 
         <Footer />

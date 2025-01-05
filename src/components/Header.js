@@ -20,9 +20,10 @@ const Header = () => (
     {/* Example breakdown of FELT (You can customize) */}
     <p className='m0 mt2'>
       <strong>FELT count example</strong>: 
-      <br/>• <strong>2–6</strong> = +1 
-      <br/>• <strong>7–9</strong> = 0 
-      <br/>• <strong>10, J, Q, K, A</strong> = −1
+      <br/>• <strong>2 and 7</strong> = +1
+      <br/>• <strong>3–6</strong> = +2 
+      <br/>• <strong>8–9</strong> = 0 
+      <br/>• <strong>10, J, Q, K, A</strong> = −2
     </p>
 
     <p className='m0 mt2'>
